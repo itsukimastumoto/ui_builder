@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ログイン | giftee Benefit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* =====================================================
+       CSS Variables
+       ===================================================== */
+    :root {
+      --color-primary: #0C6993;
+      --color-primary-dark: #003F65;
+      --color-primary-light: #EBF4FA;
+      --color-text: #4E5B61;
+      --color-text-gray: #899295;
+      --color-background: #F6F7F8;
+      --color-white: #FFFFFF;
+      --color-border: #E1E7EA;
+      --color-error: #F08B71;
+      --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-md: 8px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.08);
+      --transition: 0.2s ease;
+    }
+
+    /* =====================================================
+       Reset & Base
+       ===================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--color-text);
+      background: linear-gradient(135deg, #F6F7F8 0%, #E8EEF2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* =====================================================
+       Login Container
+       ===================================================== */
+    .login-container {
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* =====================================================
+       Logo & Title
+       ===================================================== */
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .login-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text);
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    /* =====================================================
+       Form
+       ===================================================== */
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-family: var(--font-family);
+      font-size: 14px;
+      color: var(--color-text);
+      background: var(--color-white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-input:hover {
+      border-color: #C4CED4;
+    }
+
+    .form-input:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .form-input::placeholder {
+      color: var(--color-text-gray);
+    }
+
+    /* =====================================================
+       Button
+       ===================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 14px 24px;
+      font-family: var(--font-family);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-white);
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+      border: none;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 8px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(12, 105, 147, 0.35);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    /* =====================================================
+       Links
+       ===================================================== */
+    .login-links {
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    .login-link {
+      font-size: 13px;
+      color: var(--color-primary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .login-link:hover {
+      text-decoration: underline;
+    }
+
+    /* =====================================================
+       Footer
+       ===================================================== */
+    .login-footer {
+      margin-top: 32px;
+      text-align: center;
+    }
+
+    .login-copyright {
+      font-size: 12px;
+      color: var(--color-text-gray);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-text">giftee Benefit</div>
+      </div>
+
+      <h1 class="login-title">ログイン</h1>
+
+      <form class="login-form">
+        <div class="form-group">
+          <label class="form-label">メールアドレス</label>
+          <input
+            type="email"
+            class="form-input"
+            placeholder="example@giftee.co.jp"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">パスワード</label>
+          <input
+            type="password"
+            class="form-input"
+            placeholder="パスワードを入力"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn">
+          ログイン
+        </button>
+      </form>
+
+      <div class="login-links">
+        <a href="#" class="login-link">パスワードをお忘れの方</a>
+      </div>
+
+      <div class="login-footer">
+        <p class="login-copyright">&copy; giftee Inc.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

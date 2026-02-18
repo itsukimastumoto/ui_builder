@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ユーザー詳細 | giftee Benefit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* =====================================================
+       CSS Variables
+       ===================================================== */
+    :root {
+      --color-primary: #0C6993;
+      --color-primary-dark: #003F65;
+      --color-primary-light: #EBF4FA;
+      --color-text: #4E5B61;
+      --color-text-dark: #2D3436;
+      --color-text-gray: #899295;
+      --color-background: #F6F7F8;
+      --color-white: #FFFFFF;
+      --color-border: #E1E7EA;
+      --color-border-light: #EAEEF0;
+      --color-success: #28A745;
+      --color-success-light: #D4EDDA;
+      --color-error: #F08B71;
+      --color-error-light: #FDECE8;
+      --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius-md: 8px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+      --transition: 0.2s ease;
+      --sidenav-width: 260px;
+    }
+
+    /* Reset & Base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--color-text);
+      background: var(--color-background);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidenav */
+    .sidenav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidenav-width);
+      height: 100vh;
+      background: var(--color-white);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidenav-header { padding: 24px; border-bottom: 1px solid var(--color-border-light); }
+    .sidenav-logo { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+    .sidenav-user { padding: 12px 24px; font-size: 12px; color: var(--color-text-gray); background: var(--color-background); border-bottom: 1px solid var(--color-border-light); }
+    .sidenav-menu { flex: 1; padding: 16px 12px; }
+    .sidenav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; font-size: 14px; font-weight: 500; color: var(--color-text); text-decoration: none; border-radius: var(--radius-md); transition: var(--transition); margin-bottom: 4px; }
+    .sidenav-item:hover { background: var(--color-background); }
+    .sidenav-item.active { background: var(--color-primary-light); color: var(--color-primary); font-weight: 700; }
+    .sidenav-item svg { width: 20px; height: 20px; }
+    .sidenav-footer { padding: 16px 24px; border-top: 1px solid var(--color-border-light); }
+    .sidenav-footer-link { display: block; font-size: 13px; color: var(--color-text); text-decoration: none; margin-bottom: 8px; }
+    .sidenav-footer-link:hover { color: var(--color-primary); }
+    .sidenav-copyright { font-size: 11px; color: var(--color-text-gray); margin-top: 12px; }
+
+    /* Main */
+    .main { flex: 1; margin-left: var(--sidenav-width); }
+    .main-content { padding: 32px 40px; max-width: 1000px; }
+
+    /* Back Link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--color-primary);
+      text-decoration: none;
+      margin-bottom: 20px;
+      transition: var(--transition);
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* Page Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .page-title { font-size: 24px; font-weight: 700; color: var(--color-text-dark); }
+    .page-actions { display: flex; gap: 8px; }
+
+    /* Section */
+    .section { background: var(--color-white); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-text-dark);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 18px;
+      background: var(--color-primary);
+      border-radius: 2px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: var(--font-family);
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    .btn-outlined { background: var(--color-white); color: var(--color-primary); border: 1px solid var(--color-primary); }
+    .btn-outlined:hover { background: var(--color-primary-light); }
+    .btn-danger { background: var(--color-white); color: var(--color-error); border: 1px solid var(--color-error); }
+    .btn-danger:hover { background: var(--color-error-light); }
+
+    /* Detail Table */
+    .detail-table { width: 100%; }
+    .detail-row { display: flex; border-bottom: 1px solid var(--color-border-light); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label {
+      flex: 0 0 180px;
+      padding: 14px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-text);
+      background: var(--color-background);
+    }
+    .detail-value {
+      flex: 1;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--color-text);
+    }
+    .detail-value.highlight {
+      font-weight: 700;
+      color: var(--color-primary);
+      font-size: 16px;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: var(--radius-full);
+    }
+    .badge-success { background: var(--color-success-light); color: #155724; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid var(--color-border-light);
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-gray);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .tab:hover { color: var(--color-text); }
+    .tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 700; }
+
+    /* Table */
+    .table { width: 100%; border-collapse: collapse; }
+    .table th {
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-text-gray);
+      text-align: left;
+      background: var(--color-background);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .table td {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--color-text);
+      border-bottom: 1px solid var(--color-border-light);
+    }
+    .table tbody tr:hover { background: var(--color-primary-light); }
+
+    .text-success { color: var(--color-success); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- サイドナビゲーション -->
+    <nav class="sidenav">
+      <div class="sidenav-header">
+        <div class="sidenav-logo">giftee Benefit</div>
+      </div>
+      <div class="sidenav-user">xxxxxx@giftee.co でログイン中</div>
+      <div class="sidenav-menu">
+        <a href="#" class="sidenav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          ホーム
+        </a>
+        <a href="#" class="sidenav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          ユーザー
+        </a>
+        <a href="#" class="sidenav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          ポイント一括付与
+        </a>
+      </div>
+      <div class="sidenav-footer">
+        <a href="#" class="sidenav-footer-link">ログアウト</a>
+        <div class="sidenav-copyright">&copy; giftee Inc.</div>
+      </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main class="main">
+      <div class="main-content">
+        <a href="#" class="back-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          ユーザー一覧に戻る
+        </a>
+
+        <div class="page-header">
+          <h1 class="page-title">ユーザー詳細</h1>
+          <div class="page-actions">
+            <button class="btn btn-outlined btn-sm">編集</button>
+            <button class="btn btn-danger btn-sm">削除</button>
+          </div>
+        </div>
+
+        <!-- 基本情報 -->
+        <div class="section">
+          <h2 class="section-title">基本情報</h2>
+          <div class="detail-table">
+            <div class="detail-row">
+              <div class="detail-label">ユーザーID</div>
+              <div class="detail-value">001</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">ユーザー名</div>
+              <div class="detail-value">山田 太郎</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">メールアドレス</div>
+              <div class="detail-value">yamada.taro@example.com</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">ステータス</div>
+              <div class="detail-value"><span class="badge badge-success">有効</span></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">登録日</div>
+              <div class="detail-value">2024/01/15</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">最終ログイン</div>
+              <div class="detail-value">2024/03/18 14:30</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ポイント情報 -->
+        <div class="section">
+          <h2 class="section-title">ポイント情報</h2>
+          <div class="detail-table">
+            <div class="detail-row">
+              <div class="detail-label">保有ポイント</div>
+              <div class="detail-value highlight">5,000 pt</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">累計獲得ポイント</div>
+              <div class="detail-value">15,000 pt</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">累計利用ポイント</div>
+              <div class="detail-value">10,000 pt</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 履歴 -->
+        <div class="section">
+          <div class="tabs">
+            <button class="tab active">獲得履歴</button>
+            <button class="tab">利用履歴</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>日時</th>
+                <th>内容</th>
+                <th>ポイント</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2024/03/18 11:00</td>
+                <td>春のキャンペーン</td>
+                <td class="text-success">+1,000 pt</td>
+              </tr>
+              <tr>
+                <td>2024/03/10 09:00</td>
+                <td>ログインボーナス</td>
+                <td class="text-success">+100 pt</td>
+              </tr>
+              <tr>
+                <td>2024/03/01 10:00</td>
+                <td>新規登録特典</td>
+                <td class="text-success">+500 pt</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

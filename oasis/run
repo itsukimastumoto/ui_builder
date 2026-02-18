@@ -1,0 +1,282 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+UI_ROOT="$SCRIPT_DIR"
+ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+TASK_ROOT="$UI_ROOT/task"
+
+usage() {
+  cat <<'EOF'
+UI Builder runner (OASIS)
+
+Usage:
+  run --requirements "..." [--title "..." ] [--screen cs|cl] [--output filename.html]
+
+Notes:
+  - requirements must be a single line (no newlines)
+  - screen defaults to auto-detect (admin keywords -> cl, otherwise cs)
+EOF
+}
+
+TITLE=""
+REQ=""
+SCREEN=""
+OUTPUT=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --title)
+      TITLE="${2:-}"
+      shift 2
+      ;;
+    --requirements|--requirement|--req)
+      REQ="${2:-}"
+      shift 2
+      ;;
+    --screen|--mode)
+      SCREEN="${2:-}"
+      shift 2
+      ;;
+    --output)
+      OUTPUT="${2:-}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      usage
+      exit 2
+      ;;
+  esac
+done
+
+if [ -z "$(printf '%s' "$REQ" | tr -d '[:space:]')" ]; then
+  cat <<'EOF'
+UI Builder needs requirements. Please send:
+- purpose / target users
+- key sections or elements
+- actions or states to show
+- CS (user) or CL (admin). If omitted, auto-detect.
+EOF
+  exit 0
+fi
+
+sanitize_title() {
+  local raw="$1"
+  local fallback="$2"
+  if [ -z "$(printf '%s' "$raw" | tr -d '[:space:]')" ]; then
+    raw="$fallback"
+  fi
+  raw="$(printf '%s' "$raw" | tr '\n' ' ' | sed 's/[\/:]/-/g' | tr -s ' ' '_' | sed 's/^_//;s/_$//')"
+  if [ -z "$raw" ]; then
+    raw="ui"
+  fi
+  printf '%s' "$raw"
+}
+
+detect_screen() {
+  local text="$1"
+  if printf '%s' "$text" | grep -qiE "管理画面|管理者|admin|CL"; then
+    printf '%s' "cl"
+  else
+    printf '%s' "cs"
+  fi
+}
+
+if [ -z "$SCREEN" ]; then
+  SCREEN="$(detect_screen "$REQ")"
+fi
+if [ "$SCREEN" != "cs" ] && [ "$SCREEN" != "cl" ]; then
+  echo "Invalid screen: $SCREEN (use cs or cl)"
+  exit 2
+fi
+
+DATE="$(date +"%y%m%d")"
+TITLE_SAFE="$(sanitize_title "$TITLE" "$REQ")"
+TASK_NAME="${DATE}_${TITLE_SAFE}"
+TASK_DIR="$TASK_ROOT/$TASK_NAME"
+
+if [ -d "$TASK_DIR" ]; then
+  idx=2
+  while [ -d "${TASK_DIR}_$idx" ]; do
+    idx=$((idx + 1))
+  done
+  TASK_DIR="${TASK_DIR}_$idx"
+  TASK_NAME="$(basename "$TASK_DIR")"
+fi
+
+REQ_DIR="$TASK_DIR/01_require"
+OUT_DIR="$TASK_DIR/03_ui"
+REQ_FILE="$REQ_DIR/要件書.txt"
+
+mkdir -p "$REQ_DIR" "$OUT_DIR"
+printf '%s\n' "$REQ" > "$REQ_FILE"
+
+if [ -z "$OUTPUT" ]; then
+  OUTPUT="ui.html"
+fi
+if [[ "$OUTPUT" != *.html ]]; then
+  OUTPUT="${OUTPUT}.html"
+fi
+OUTPUT_FILE="$OUT_DIR/$OUTPUT"
+
+resolve_claude() {
+  local direct_path="$HOME/.nvm/versions/node/v20.19.4/bin/claude"
+  if [ -x "$direct_path" ]; then
+    printf '%s' "$direct_path"
+    return 0
+  fi
+  local candidate
+  candidate="$(ls -1 "$HOME"/.nvm/versions/node/*/bin/claude 2>/dev/null | tail -n 1 || true)"
+  if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+    printf '%s' "$candidate"
+    return 0
+  fi
+  if command -v claude >/dev/null 2>&1; then
+    command -v claude
+    return 0
+  fi
+  return 1
+}
+
+resolve_codex() {
+  if command -v codex >/dev/null 2>&1; then
+    command -v codex
+    return 0
+  fi
+  return 1
+}
+
+CLAUDE_BIN=""
+CODEX_BIN=""
+if CLAUDE_BIN="$(resolve_claude)"; then
+  :
+fi
+if CODEX_BIN="$(resolve_codex)"; then
+  :
+fi
+
+if [ -z "$CLAUDE_BIN" ] && [ -z "$CODEX_BIN" ]; then
+  echo "Error: neither claude nor codex was found in PATH."
+  exit 1
+fi
+
+screen_label="CS (mobile 375px, bottom nav)"
+if [ "$SCREEN" = "cl" ]; then
+  screen_label="CL (admin desktop, side nav 260px)"
+fi
+
+prompt="$(cat <<EOF
+You are generating a single standalone HTML file for giftee Benefit.
+Constraints:
+- Output only HTML (no Markdown, no backticks).
+- Use <style> for CSS. Use <script> only if needed.
+- Only external resource allowed: Google Fonts (Noto Sans JP).
+- Do not mention "oasis".
+- Screen type: ${screen_label}.
+- Prefer these design tokens:
+  Primary #0C6993, Primary Dark #0F658D, Primary Light #EBF4FA
+  Text #4E5B61, Text Gray #777777
+  Background CS #F0F0F0, Background CL #F6F7F8
+  Border CS #D9D9D9, Border CL #E1E7EA
+  Font: 'Noto Sans JP'
+- Use a clean, modern UI that matches giftee Benefit.
+
+Requirements:
+${REQ}
+EOF
+)"
+
+extract_html() {
+  python3 - "$@" <<'PY'
+import sys
+
+text = sys.stdin.read()
+if not text.strip():
+    sys.exit(1)
+
+start = text.find("<!DOCTYPE")
+if start == -1:
+    start = text.find("<html")
+if start != -1:
+    end = text.rfind("</html>")
+    if end != -1:
+        sys.stdout.write(text[start:end + len("</html>")])
+        sys.exit(0)
+sys.stdout.write(text.strip())
+PY
+}
+
+render_with_claude() {
+  local tmp_err
+  tmp_err="$(mktemp)"
+  local model_args=()
+  if [ -n "${CLAUDE_MODEL:-}" ]; then
+    model_args=(--model "$CLAUDE_MODEL")
+  fi
+  local out
+  out="$(printf '%s' "$prompt" | "$CLAUDE_BIN" -p \
+    --output-format text \
+    --dangerously-skip-permissions \
+    ${model_args[@]+"${model_args[@]}"} \
+    2>"$tmp_err")" || true
+  if [ -n "$(printf '%s' "$out" | tr -d '[:space:]')" ]; then
+    printf '%s' "$out"
+    rm -f "$tmp_err"
+    return 0
+  fi
+  rm -f "$tmp_err"
+  return 1
+}
+
+render_with_codex() {
+  local tmp_err
+  tmp_err="$(mktemp)"
+  local model_args=()
+  if [ -n "${CODEX_MODEL:-}" ]; then
+    model_args=(--model "$CODEX_MODEL")
+  fi
+  local out
+  out="$("$CODEX_BIN" exec \
+    --color never \
+    --skip-git-repo-check \
+    -C "$ROOT" \
+    ${model_args[@]+"${model_args[@]}"} \
+    "$prompt" 2>"$tmp_err")" || true
+  if [ -n "$(printf '%s' "$out" | tr -d '[:space:]')" ]; then
+    printf '%s' "$out"
+    rm -f "$tmp_err"
+    return 0
+  fi
+  rm -f "$tmp_err"
+  return 1
+}
+
+html_out=""
+if [ -n "$CLAUDE_BIN" ]; then
+  html_out="$(render_with_claude || true)"
+fi
+if [ -z "$(printf '%s' "$html_out" | tr -d '[:space:]')" ] && [ -n "$CODEX_BIN" ]; then
+  html_out="$(render_with_codex || true)"
+fi
+
+if [ -z "$(printf '%s' "$html_out" | tr -d '[:space:]')" ]; then
+  echo "Error: failed to generate HTML."
+  exit 1
+fi
+
+if ! printf '%s' "$html_out" | extract_html > "$OUTPUT_FILE"; then
+  echo "Error: failed to extract HTML."
+  exit 1
+fi
+
+cat <<EOF
+UI Builder completed.
+Task: $TASK_NAME
+Requirements: $REQ_FILE
+Output: $OUTPUT_FILE
+EOF

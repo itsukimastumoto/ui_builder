@@ -1,0 +1,194 @@
+/**
+ * giftee Benefit (Oasis) Design Tokens
+ * Figma: https://www.figma.com/design/PtIjftYnAC9cIGfkH5DMSX/giftee-Benefit
+ *
+ * このファイルはUI作成時に参照するデザイントークンです。
+ * CS画面（ユーザー向け）とCL画面（管理者向け）で一部異なります。
+ */
+
+/* =====================================================
+   共通カラーパレット
+   ===================================================== */
+:root {
+  /* === Primary（ブランドカラー） === */
+  --color-primary: #0C6993;
+  --color-primary-dark: #0F658D;
+  --color-primary-darker: #003F65;
+  --color-primary-light: #EBF4FA;
+
+  /* === Text === */
+  --color-text: #4E5B61;
+  --color-text-dark: #4B4B4B;
+  --color-text-darker: #2D3436;
+  --color-text-gray: #777777;
+  --color-text-light: #899295;
+  --color-text-link: #1E90FF;
+  --color-text-white: #FFFFFF;
+  --color-text-black: #000000;
+
+  /* === Background === */
+  --color-background-cs: #F0F0F0;      /* CS画面用 */
+  --color-background-cl: #F6F7F8;      /* CL画面用 */
+  --color-white: #FFFFFF;
+
+  /* === Border === */
+  --color-border-cs: #D9D9D9;          /* CS画面用 */
+  --color-border-cl: #E1E7EA;          /* CL画面用 */
+  --color-border-light: #E5E5E5;
+  --color-border-lighter: #EAEEF0;
+
+  /* === Status === */
+  --color-positive: #28A745;
+  --color-positive-light: #D4EDDA;
+  --color-negative: #DC3545;
+  --color-negative-light: #F8D7DA;
+  --color-warning: #FFC107;
+  --color-warning-light: #FFF3CD;
+  --color-info: #17A2B8;
+  --color-info-light: #D1ECF1;
+  --color-error: #F08B71;
+  --color-error-light: #FDECE8;
+
+  /* === Accent（特別な用途） === */
+  --color-accent-pink: #E8A598;
+  --color-accent-orange: #F4B860;
+  --color-accent-green: #7ECBA1;
+  --color-accent-blue: #7BA7D7;
+}
+
+/* =====================================================
+   タイポグラフィ
+   ===================================================== */
+:root {
+  /* フォントファミリー */
+  --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-display: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+
+  /* フォントサイズ */
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 28px;
+  --font-size-4xl: 32px;
+
+  /* フォントウェイト */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* 行間 */
+  --line-height-tight: 1;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  --line-height-loose: 2;
+}
+
+/* =====================================================
+   スペーシング
+   ===================================================== */
+:root {
+  --spacing-0: 0;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+}
+
+/* =====================================================
+   ボーダーラジウス
+   ===================================================== */
+:root {
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+}
+
+/* =====================================================
+   シャドウ
+   ===================================================== */
+:root {
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-bottom-bar: 0px -0.3px 0px 0px rgba(174, 174, 180, 1);
+}
+
+/* =====================================================
+   トランジション
+   ===================================================== */
+:root {
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}
+
+/* =====================================================
+   レイアウト
+   ===================================================== */
+:root {
+  /* CS画面（モバイル） */
+  --cs-max-width: 375px;
+  --cs-header-height: 56px;
+  --cs-bottom-nav-height: 83px;
+  --cs-status-bar-height: 44px;
+
+  /* CL画面（デスクトップ） */
+  --cl-sidenav-width: 260px;
+  --cl-main-max-width: 1200px;
+}
+
+/* =====================================================
+   ボトムバー（CS画面用）
+   ===================================================== */
+:root {
+  --bottom-bar-bg: rgba(248, 248, 248, 0.82);
+  --bottom-bar-blur: blur(60px);
+}
+
+/* =====================================================
+   ボタン
+   ===================================================== */
+:root {
+  /* Primary Button */
+  --btn-primary-bg: var(--color-primary);
+  --btn-primary-bg-hover: var(--color-primary-dark);
+  --btn-primary-text: var(--color-white);
+
+  /* Neutral Button */
+  --btn-neutral-bg: var(--color-white);
+  --btn-neutral-bg-hover: var(--color-background-cs);
+  --btn-neutral-text: var(--color-text);
+  --btn-neutral-border: var(--color-border-cs);
+
+  /* Button Sizes */
+  --btn-height-sm: 32px;
+  --btn-height-md: 40px;
+  --btn-height-lg: 48px;
+}
+
+/* =====================================================
+   インプット
+   ===================================================== */
+:root {
+  --input-height: 48px;
+  --input-border: var(--color-border-cs);
+  --input-border-focus: var(--color-primary);
+  --input-radius: var(--radius-md);
+  --input-padding: 0 8px;
+}

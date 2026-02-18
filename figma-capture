@@ -1,0 +1,324 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# figma-capture: UI Builder Figma キャプチャヘルパー
+# HTTPサーバー管理、キャプチャスクリプト注入/除去、Chrome操作を担当
+# MCP (generate_figma_design) の呼び出しはエージェント側で行う
+
+PID_FILE="/tmp/figma-capture-server.pid"
+MARKER_START="<!-- figma-capture-start -->"
+MARKER_END="<!-- figma-capture-end -->"
+
+usage() {
+  cat <<'EOF'
+figma-capture - UI Builder Figma キャプチャヘルパー
+
+Usage:
+  figma-capture serve <dir> [--port PORT]    HTTPサーバー起動
+  figma-capture inject <html-file> <script>  キャプチャスクリプト注入
+  figma-capture open <url> [--delay SEC]     ChromeでURL表示→待機→閉じる
+  figma-capture clean <html-file>            キャプチャスクリプト除去
+  figma-capture stop                         HTTPサーバー停止
+
+Examples:
+  figma-capture serve task/260218_home/03_ui/
+  figma-capture inject task/.../03_ui/home.html '<script src="..."></script>'
+  figma-capture open "http://localhost:8765/home.html#figmacapture=abc123"
+  figma-capture clean task/.../03_ui/home.html
+  figma-capture stop
+EOF
+}
+
+# --------------------------------------------------
+# serve: HTTPサーバーを起動
+# --------------------------------------------------
+cmd_serve() {
+  local dir=""
+  local port=8765
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --port) port="${2:-8765}"; shift 2 ;;
+      *) dir="$1"; shift ;;
+    esac
+  done
+
+  if [ -z "$dir" ]; then
+    echo "Error: directory required" >&2
+    echo "Usage: figma-capture serve <dir> [--port PORT]" >&2
+    exit 1
+  fi
+
+  if [ ! -d "$dir" ]; then
+    echo "Error: directory not found: $dir" >&2
+    exit 1
+  fi
+
+  # 既存サーバーがあれば停止
+  if [ -f "$PID_FILE" ]; then
+    local old_pid
+    old_pid="$(cat "$PID_FILE")"
+    if kill -0 "$old_pid" 2>/dev/null; then
+      echo "Stopping existing server (PID: $old_pid)..." >&2
+      kill "$old_pid" 2>/dev/null || true
+      sleep 1
+    fi
+    rm -f "$PID_FILE"
+  fi
+
+  # ポートが使用中なら解放
+  local existing_pid
+  existing_pid="$(lsof -ti:"$port" 2>/dev/null || true)"
+  if [ -n "$existing_pid" ]; then
+    echo "Port $port in use (PID: $existing_pid), killing..." >&2
+    kill "$existing_pid" 2>/dev/null || true
+    sleep 1
+  fi
+
+  # サーバー起動（バックグラウンド）
+  python3 -m http.server "$port" --directory "$dir" >/dev/null 2>&1 &
+  local pid=$!
+  echo "$pid" > "$PID_FILE"
+
+  # 起動確認
+  sleep 1
+  if ! kill -0 "$pid" 2>/dev/null; then
+    echo "Error: server failed to start" >&2
+    rm -f "$PID_FILE"
+    exit 1
+  fi
+
+  # 接続確認
+  local retries=3
+  while [ $retries -gt 0 ]; do
+    if curl -s -o /dev/null "http://localhost:$port/" 2>/dev/null; then
+      echo "Server started on port $port (PID: $pid)"
+      echo "Directory: $dir"
+      return 0
+    fi
+    retries=$((retries - 1))
+    sleep 1
+  done
+
+  echo "Warning: server started (PID: $pid) but connection check failed" >&2
+  echo "Server started on port $port (PID: $pid)"
+  echo "Directory: $dir"
+}
+
+# --------------------------------------------------
+# inject: HTMLファイルにキャプチャスクリプトを注入
+# --------------------------------------------------
+cmd_inject() {
+  local html_file="${1:-}"
+  local script_content="${2:-}"
+
+  if [ -z "$html_file" ] || [ -z "$script_content" ]; then
+    echo "Error: html-file and script-content required" >&2
+    echo "Usage: figma-capture inject <html-file> <script-content>" >&2
+    exit 1
+  fi
+
+  if [ ! -f "$html_file" ]; then
+    echo "Error: file not found: $html_file" >&2
+    exit 1
+  fi
+
+  # 既に注入済みならスキップ
+  if grep -q "$MARKER_START" "$html_file" 2>/dev/null; then
+    echo "Already injected: $(basename "$html_file")"
+    return 0
+  fi
+
+  # 注入するブロック
+  local inject_block
+  inject_block="$(printf '%s\n%s\n%s' "$MARKER_START" "$script_content" "$MARKER_END")"
+
+  # <meta charset="..."> の直後に挿入（なければ <head> の直後）
+  if grep -q '<meta charset' "$html_file"; then
+    # <meta charset> 行の後に挿入
+    python3 -c "
+import sys
+content = open(sys.argv[1], 'r', encoding='utf-8').read()
+inject = sys.argv[2]
+# Find <meta charset...> line end
+import re
+match = re.search(r'<meta\s+charset[^>]*>', content, re.IGNORECASE)
+if match:
+    pos = match.end()
+    # Skip to end of line if there's a newline
+    nl = content.find('\n', pos)
+    if nl != -1 and nl - pos < 3:
+        pos = nl + 1
+    content = content[:pos] + inject + '\n' + content[pos:]
+else:
+    # Fallback: after <head>
+    match = re.search(r'<head[^>]*>', content, re.IGNORECASE)
+    if match:
+        pos = match.end()
+        nl = content.find('\n', pos)
+        if nl != -1 and nl - pos < 3:
+            pos = nl + 1
+        content = content[:pos] + inject + '\n' + content[pos:]
+open(sys.argv[1], 'w', encoding='utf-8').write(content)
+" "$html_file" "$inject_block"
+  else
+    # <head> の直後に挿入
+    python3 -c "
+import sys, re
+content = open(sys.argv[1], 'r', encoding='utf-8').read()
+inject = sys.argv[2]
+match = re.search(r'<head[^>]*>', content, re.IGNORECASE)
+if match:
+    pos = match.end()
+    nl = content.find('\n', pos)
+    if nl != -1 and nl - pos < 3:
+        pos = nl + 1
+    content = content[:pos] + inject + '\n' + content[pos:]
+open(sys.argv[1], 'w', encoding='utf-8').write(content)
+" "$html_file" "$inject_block"
+  fi
+
+  echo "Injected: $(basename "$html_file")"
+}
+
+# --------------------------------------------------
+# open: ChromeでURLを開き、待機後に閉じる
+# --------------------------------------------------
+cmd_open() {
+  local url=""
+  local delay=8
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --delay) delay="${2:-8}"; shift 2 ;;
+      *) url="$1"; shift ;;
+    esac
+  done
+
+  if [ -z "$url" ]; then
+    echo "Error: URL required" >&2
+    echo "Usage: figma-capture open <url> [--delay SEC]" >&2
+    exit 1
+  fi
+
+  # Chrome が起動しているか確認
+  if ! pgrep -x "Google Chrome" >/dev/null 2>&1; then
+    echo "Error: Google Chrome is not running" >&2
+    exit 1
+  fi
+
+  # AppleScript で Chrome の新しいタブでURLを開く
+  osascript <<APPLESCRIPT
+tell application "Google Chrome"
+  activate
+  if (count of windows) = 0 then
+    make new window
+  end if
+  tell front window
+    set newTab to make new tab with properties {URL:"${url}"}
+  end tell
+end tell
+APPLESCRIPT
+
+  echo "Opened: $url"
+  echo "Waiting ${delay}s for capture..."
+  sleep "$delay"
+
+  # タブを閉じる（タブが2つ以上ある場合のみ）
+  osascript <<'APPLESCRIPT'
+tell application "Google Chrome"
+  tell front window
+    if (count of tabs) > 1 then
+      close active tab
+    end if
+  end tell
+end tell
+APPLESCRIPT
+
+  echo "Tab closed"
+}
+
+# --------------------------------------------------
+# clean: HTMLファイルからキャプチャスクリプトを除去
+# --------------------------------------------------
+cmd_clean() {
+  local html_file="${1:-}"
+
+  if [ -z "$html_file" ]; then
+    echo "Error: html-file required" >&2
+    echo "Usage: figma-capture clean <html-file>" >&2
+    exit 1
+  fi
+
+  if [ ! -f "$html_file" ]; then
+    echo "Error: file not found: $html_file" >&2
+    exit 1
+  fi
+
+  # マーカーがなければスキップ
+  if ! grep -q "$MARKER_START" "$html_file" 2>/dev/null; then
+    echo "No capture script found: $(basename "$html_file")"
+    return 0
+  fi
+
+  # マーカー間のブロックを削除
+  python3 -c "
+import sys, re
+content = open(sys.argv[1], 'r', encoding='utf-8').read()
+marker_start = sys.argv[2]
+marker_end = sys.argv[3]
+# Remove the block including markers and surrounding newline
+pattern = re.escape(marker_start) + r'.*?' + re.escape(marker_end) + r'\n?'
+content = re.sub(pattern, '', content, flags=re.DOTALL)
+open(sys.argv[1], 'w', encoding='utf-8').write(content)
+" "$html_file" "$MARKER_START" "$MARKER_END"
+
+  echo "Cleaned: $(basename "$html_file")"
+}
+
+# --------------------------------------------------
+# stop: HTTPサーバーを停止
+# --------------------------------------------------
+cmd_stop() {
+  if [ ! -f "$PID_FILE" ]; then
+    echo "No server running (PID file not found)"
+    return 0
+  fi
+
+  local pid
+  pid="$(cat "$PID_FILE")"
+
+  if kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null
+    echo "Server stopped (PID: $pid)"
+  else
+    echo "Server already stopped (stale PID: $pid)"
+  fi
+
+  rm -f "$PID_FILE"
+}
+
+# --------------------------------------------------
+# メインディスパッチ
+# --------------------------------------------------
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 0
+fi
+
+cmd="$1"
+shift
+
+case "$cmd" in
+  serve)   cmd_serve "$@" ;;
+  inject)  cmd_inject "$@" ;;
+  open)    cmd_open "$@" ;;
+  clean)   cmd_clean "$@" ;;
+  stop)    cmd_stop "$@" ;;
+  -h|--help) usage ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    usage
+    exit 2
+    ;;
+esac

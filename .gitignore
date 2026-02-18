@@ -1,0 +1,14 @@
+# プロダクト固有の生成物
+*/task/
+*/output/
+*/input/
+
+# kondate-loop（非公開）
+kondate-loop/
+
+# macOS
+.DS_Store
+
+# 一時ファイル
+*.tmp
+/tmp/

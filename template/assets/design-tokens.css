@@ -1,0 +1,46 @@
+/*
+ * デザイントークン — __PRODUCT_NAME__
+ *
+ * このファイルをプロダクトのデザインに合わせて編集してください。
+ * run スクリプトのプロンプトにも主要カラーを記載してください。
+ */
+
+:root {
+  /* Primary */
+  --color-primary: #3B82F6;         /* メインカラー */
+  --color-primary-dark: #2563EB;    /* ホバー/アクセント */
+  --color-primary-light: #EFF6FF;   /* 薄い背景 */
+
+  /* Text */
+  --color-text: #1F2937;            /* メインテキスト */
+  --color-text-secondary: #6B7280;  /* サブテキスト */
+  --color-text-hint: #9CA3AF;       /* ヒント */
+
+  /* Background */
+  --color-background: #F9FAFB;      /* ページ背景 */
+  --color-surface: #FFFFFF;         /* カード背景 */
+
+  /* Border */
+  --color-border: #E5E7EB;
+
+  /* Status */
+  --color-success: #10B981;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+
+  /* Typography */
+  --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+}
