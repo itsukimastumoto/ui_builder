@@ -3,7 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 UI_ROOT="$SCRIPT_DIR"
-ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# repo root (= one level above oasis/)
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TASK_ROOT="$UI_ROOT/task"
 
 usage() {
@@ -125,19 +126,15 @@ fi
 OUTPUT_FILE="$OUT_DIR/$OUTPUT"
 
 resolve_claude() {
-  local direct_path="$HOME/.nvm/versions/node/v20.19.4/bin/claude"
-  if [ -x "$direct_path" ]; then
-    printf '%s' "$direct_path"
+  if command -v claude >/dev/null 2>&1; then
+    command -v claude
     return 0
   fi
+  # nvm 環境のフォールバック
   local candidate
   candidate="$(ls -1 "$HOME"/.nvm/versions/node/*/bin/claude 2>/dev/null | tail -n 1 || true)"
   if [ -n "$candidate" ] && [ -x "$candidate" ]; then
     printf '%s' "$candidate"
-    return 0
-  fi
-  if command -v claude >/dev/null 2>&1; then
-    command -v claude
     return 0
   fi
   return 1
@@ -172,8 +169,10 @@ fi
 
 prompt="$(cat <<EOF
 You are generating a single standalone HTML file for giftee Benefit.
+CRITICAL: Output ONLY raw HTML to stdout. Do NOT write files. Do NOT use tools. Just print the HTML.
 Constraints:
-- Output only HTML (no Markdown, no backticks).
+- Start with <!DOCTYPE html> and end with </html>.
+- No Markdown, no backticks, no explanations — raw HTML only.
 - Use <style> for CSS. Use <script> only if needed.
 - Only external resource allowed: Google Fonts (Noto Sans JP).
 - Do not mention "oasis".
@@ -192,11 +191,12 @@ EOF
 )"
 
 extract_html() {
-  python3 - "$@" <<'PY'
+  python3 -c '
 import sys
 
 text = sys.stdin.read()
 if not text.strip():
+    print("extract_html: empty input", file=sys.stderr)
     sys.exit(1)
 
 start = text.find("<!DOCTYPE")
@@ -207,8 +207,11 @@ if start != -1:
     if end != -1:
         sys.stdout.write(text[start:end + len("</html>")])
         sys.exit(0)
-sys.stdout.write(text.strip())
-PY
+
+print("extract_html: no HTML found in output", file=sys.stderr)
+print("First 200 chars:", text[:200], file=sys.stderr)
+sys.exit(1)
+'
 }
 
 render_with_claude() {
@@ -219,6 +222,8 @@ render_with_claude() {
     model_args=(--model "$CLAUDE_MODEL")
   fi
   local out
+  # --dangerously-skip-permissions: パイプモードで非対話的に実行するために必要。
+  # プロンプトは本スクリプトが制御しており、出力はテキスト（HTML文字列）のみ。
   out="$(printf '%s' "$prompt" | "$CLAUDE_BIN" -p \
     --output-format text \
     --dangerously-skip-permissions \

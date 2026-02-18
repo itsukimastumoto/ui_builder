@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail=0
+
+ok() { printf 'OK  %s\n' "$1"; }
+warn() { printf 'WARN %s\n' "$1" >&2; }
+err() { printf 'ERR %s\n' "$1" >&2; fail=1; }
+
+check_cmd() {
+  local name="$1"
+  if command -v "$name" >/dev/null 2>&1; then
+    ok "command found: $name"
+    return 0
+  fi
+  err "command missing: $name"
+  return 1
+}
+
+check_any_cmd() {
+  local a="$1"
+  local b="$2"
+  if command -v "$a" >/dev/null 2>&1; then
+    ok "command found: $a"
+    return 0
+  fi
+  if command -v "$b" >/dev/null 2>&1; then
+    ok "command found: $b"
+    return 0
+  fi
+  err "command missing: $a or $b"
+  return 1
+}
+
+echo "UI Builder doctor"
+echo
+
+check_cmd python3 || true
+check_any_cmd claude codex || true
+
+if [ -x "./figma-capture" ]; then
+  ok "executable: ./figma-capture"
+else
+  err "not executable: ./figma-capture"
+fi
+
+if [ -x "./create-product" ]; then
+  ok "executable: ./create-product"
+else
+  err "not executable: ./create-product"
+fi
+
+if [ -x "./doctor" ]; then
+  ok "executable: ./doctor"
+else
+  err "not executable: ./doctor"
+fi
+
+os="$(uname -s || true)"
+if [ "$os" = "Darwin" ]; then
+  ok "OS: macOS (Figma capture supported)"
+  if [ -d "/Applications/Google Chrome.app" ]; then
+    ok "Google Chrome.app found"
+  else
+    warn "Google Chrome.app not found at /Applications (install Chrome or adjust capture workflow)"
+  fi
+  if [ -d "/Applications/Figma.app" ]; then
+    ok "Figma.app found"
+  else
+    warn "Figma.app not found at /Applications (install Figma Desktop App)"
+  fi
+else
+  warn "OS: $os (figma-capture open uses AppleScript; capture workflow may not work)"
+fi
+
+echo
+echo "MCP reminders:"
+echo "- Figma Dev Mode MCP (read): http://127.0.0.1:3845/sse (requires Figma Desktop App + Dev Mode MCP enabled)"
+echo "- Figma Remote MCP (write): https://mcp.figma.com/mcp (OAuth required on first connect)"
+
+exit "$fail"
+

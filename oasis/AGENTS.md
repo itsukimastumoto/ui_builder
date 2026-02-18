@@ -1,4 +1,4 @@
-# UI Builder Oasis（tools/ui-builder/oasis）
+# UI Builder Oasis（oasis）
 
 ## 役割
 - giftee Benefit（OASIS）専用のUIワイヤー作成ツール。
@@ -11,7 +11,7 @@
 - 外部参照はGoogle Fonts（Noto Sans JP）のみ許可。
 
 ## 作業フロー（推奨）
-- `tools/ui-builder/oasis/run --requirements "..." --title "..." --screen cs|cl --output file.html` を使う。
+- `./run --requirements "..." --title "..." --screen cs|cl --output file.html` を使う。
 - 生成先は `task/yymmdd_タイトル/` 配下。
 - 要件書は `task/.../01_require/要件書.txt`。
 - UIは `task/.../03_ui/*.html`。
@@ -20,7 +20,7 @@
 - `input/` と `output/` を使う運用は旧式。基本は `task/` を使用する。
 
 ## Dropbox同期
-- 「同期して」依頼時は `tools/ui-builder/oasis/output/250110_palm_dp管理画面/` を Dropbox の ` /Users/itsuki.matsumoto/giftee Dropbox/Matsumoto Itsuki/giftee_Biz_template/00_biz_汎用/#sales汎用資料/g4b_Corporate Gift/02_プロダクト検討/02_gifteeBenefit/01_プロダクト概要/04_デモ環境/proto/機能説明用proto/DP管理画面1stリリースproto/` に同期する。
+- 「同期して」依頼時は `output/250110_palm_dp管理画面/` を Dropbox の ` /Users/itsuki.matsumoto/giftee Dropbox/Matsumoto Itsuki/giftee_Biz_template/00_biz_汎用/#sales汎用資料/g4b_Corporate Gift/02_プロダクト検討/02_gifteeBenefit/01_プロダクト概要/04_デモ環境/proto/機能説明用proto/DP管理画面1stリリースproto/` に同期する。
 - 古いファイル削除は許可（`rsync --delete`）。
 
 ## 参照アセット
@@ -50,7 +50,7 @@
 ## Figma キャプチャ（書き込み: HTML → Figma）
 - **HTML生成後、Figmaへのキャプチャをデフォルトで実行する。**
 - 「キャプチャ不要」「Figmaに反映しなくていい」と言われた場合のみスキップ。
-- 共通ヘルパー `tools/ui-builder/figma-capture` と MCP `generate_figma_design` を組み合わせて実行。
+- 共通ヘルパー `../figma-capture` と MCP `generate_figma_design` を組み合わせて実行。
 - キャプチャ先は `existingFile` モード（既存Figmaファイルに追加）がデフォルト。
 - タスクフォルダの `figma.json` に fileKey とキャプチャ履歴を保存。
 - 初回実行時はユーザーに Figma ファイルキーを確認する。
@@ -58,7 +58,7 @@
 - **詳細手順は `CLAUDE_GUIDE.md` の「Figma キャプチャワークフロー」を参照。**
 
 ## Figma 画面整理プラグイン
-- キャプチャ後の画面整理に使用: `tools/ui-builder/figma-plugin/`（共通）
+- キャプチャ後の画面整理に使用: `../figma-plugin/`（共通）
 - カテゴリ別セクション作成・フレーム配置を自動化。
 - Figma Desktop App のプラグインメニューから手動実行。
 - カテゴリは `figma-plugin/code.js` 先頭の `CATEGORIES` を編集してカスタマイズ。

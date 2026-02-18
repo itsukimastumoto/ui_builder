@@ -18,7 +18,7 @@ giftee Benefit (OASIS) の構想中UIをHTMLで作成するツールです。
 ## ディレクトリ構造
 
 ```
-ui-builder/oasis/
+oasis/
 ├── input/                      # 要件書入力フォルダ
 │   └── yymmdd_要件署名.txt      # 要件書ファイル
 ├── output/                     # 作成したUI出力フォルダ

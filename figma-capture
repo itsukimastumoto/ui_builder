@@ -201,10 +201,23 @@ cmd_open() {
     exit 1
   fi
 
-  # Chrome が起動しているか確認
+  # Chrome が起動しているか確認（未起動ならリトライ付きで起動）
   if ! pgrep -x "Google Chrome" >/dev/null 2>&1; then
-    echo "Error: Google Chrome is not running" >&2
-    exit 1
+    echo "Google Chrome is not running. Launching..." >&2
+    open -a "Google Chrome" >/dev/null 2>&1 || true
+    local attempts=0
+    while [ $attempts -lt 5 ]; do
+      sleep 1
+      if pgrep -x "Google Chrome" >/dev/null 2>&1; then
+        break
+      fi
+      attempts=$((attempts + 1))
+    done
+    if ! pgrep -x "Google Chrome" >/dev/null 2>&1; then
+      echo "Error: failed to launch Google Chrome. Please start Chrome manually." >&2
+      exit 1
+    fi
+    sleep 1  # UI安定待ち
   fi
 
   # AppleScript で Chrome の新しいタブでURLを開く

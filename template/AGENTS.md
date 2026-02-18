@@ -1,4 +1,4 @@
-# UI Builder __PRODUCT_NAME__（tools/ui-builder/__PRODUCT_DIR__）
+# UI Builder __PRODUCT_NAME__（__PRODUCT_DIR__）
 
 > **セットアップ前のテンプレート状態です。** `__PRODUCT_NAME__` や `__PRODUCT_DIR__` がプレースホルダーのまま残っている場合は、下記のセットアップフローを実行してください。
 
@@ -15,6 +15,7 @@
 | 1 | **Claude Code or Codex CLI** | `claude --version` or `codex --version` | https://docs.anthropic.com/en/docs/claude-code |
 | 2 | **Google Chrome** | `/Applications/Google Chrome.app` の存在確認 | https://www.google.com/chrome/ からインストール |
 | 3 | **Figma Desktop App** | `/Applications/Figma.app` の存在確認 | https://www.figma.com/downloads/ からインストール |
+| 4 | **Python 3** | `python3 --version` | macOSなら標準で入っていることが多い（なければインストール） |
 
 **MCP サーバーの設定**（Claude Codeの場合は `.mcp.json`、Codexの場合は `~/.codex/config.toml`）:
 
@@ -26,7 +27,7 @@
 **Figma画面整理プラグイン**（任意、推奨）:
 1. Figma Desktop App を開く
 2. Plugins → Development → "Import plugin from manifest..." を選択
-3. `tools/ui-builder/figma-plugin/manifest.json` を指定
+3. `../figma-plugin/manifest.json` を指定
 4. プラグイン一覧に表示されたら完了
 
 すべての前提条件が揃ったら、次のステップへ進む。
@@ -44,7 +45,7 @@
 - **既存のFigmaファイルがあるか**: あればファイルキーを取得
 
 ### 3. 自動セットアップを実行
-1. `template/` を `tools/ui-builder/<フォルダ名>/` にコピー
+1. （リポジトリルートの）`template/` を `<フォルダ名>/` にコピー
 2. 全ファイルで `__PRODUCT_NAME__` → プロダクト名、`__PRODUCT_DIR__` → フォルダ名 を置換
 3. `assets/design-tokens.css` にカラーパレットを設定
 4. `run` スクリプトのプロンプトにデザイントークンを反映
@@ -68,7 +69,7 @@
 <!-- 以下はプロダクト固有のルールを追記 -->
 
 ## 作業フロー（推奨）
-- `tools/ui-builder/__PRODUCT_DIR__/run --requirements "..." --title "..." --output file.html` を使う。
+- `./run --requirements "..." --title "..." --output file.html` を使う。
 - 生成先は `task/yymmdd_タイトル/` 配下。
 - 要件書は `task/.../01_require/要件書.txt`。
 - UIは `task/.../03_ui/*.html`。
@@ -90,15 +91,15 @@
 ## Figma キャプチャ（書き込み: HTML → Figma）
 - **HTML生成後、Figmaへのキャプチャをデフォルトで実行する。**
 - 「キャプチャ不要」「Figmaに反映しなくていい」と言われた場合のみスキップ。
-- 共通ヘルパー `tools/ui-builder/figma-capture` と MCP `generate_figma_design` を組み合わせて実行。
+- 共通ヘルパー `../figma-capture` と MCP `generate_figma_design` を組み合わせて実行。
 - キャプチャ先は `existingFile` モード（既存Figmaファイルに追加）がデフォルト。
 - タスクフォルダの `figma.json` に fileKey とキャプチャ履歴を保存。
 - 初回実行時はユーザーに Figma ファイルキーを確認する。
 - 複数HTMLは1ファイルずつ順次処理（Chrome背景タブ制約の回避）。
-- **キャプチャワークフロー詳細は `tools/ui-builder/README.md` またはOASISの `CLAUDE_GUIDE.md`「Figma キャプチャワークフロー」を参照。**
+- **キャプチャワークフロー詳細は（リポジトリルートの）`README.md` を参照。**
 
 ## Figma 画面整理プラグイン
-- キャプチャ後の画面整理に使用: `tools/ui-builder/figma-plugin/`（共通）
+- キャプチャ後の画面整理に使用: `../figma-plugin/`（共通）
 - カテゴリ別セクション作成・フレーム配置を自動化。
 - Figma Desktop App のプラグインメニューから手動実行。
 - カテゴリは `figma-plugin/code.js` 先頭の `CATEGORIES` を編集してプロダクトごとにカスタマイズ。

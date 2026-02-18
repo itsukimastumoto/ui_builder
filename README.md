@@ -2,6 +2,14 @@
 
 Claude Code / Codex を使って単一HTMLのUIワイヤーフレームを生成し、Figmaに反映するツール。
 
+このREADMEは、このリポジトリを **単体で GitHub から clone して使う**前提で書かれています（パスはリポジトリルート基準）。
+
+## 提供価値
+
+- アイデアが「既存システムのUIルール（デザイントークン/テンプレ）」準拠ですぐ形になる（単一HTMLで即プレビュー可能）
+- 形になったUIをFigmaに反映し、Figma上で管理しながら手調整できる
+- 作成したデザインを元に、Figmaでプロトタイプをすぐ作って提案に使える
+
 ## ワークフロー
 
 ```
@@ -22,6 +30,27 @@ Claude Code / Codex を使って単一HTMLのUIワイヤーフレームを生成
 | Google Chrome | Figmaキャプチャに使用（macOS） |
 | Figma Desktop App | Dev Mode MCP（読み取り）に使用 |
 | Figma Remote MCP | `generate_figma_design`（書き込み）に使用。OAuth認証が必要 |
+| Python 3 | `figma-capture` のHTTPサーバー/注入処理に使用 |
+
+## クイックスタート（10分）
+
+前提: [Claude Code](https://docs.anthropic.com/en/docs/claude-code) または Codex CLI がインストール済みであること。`./doctor` で環境チェックできます。
+
+```bash
+# 1) 環境チェック
+./doctor
+
+# 2) 新規プロダクト用フォルダを作成
+./create-product --dir my-product --name "My Product"
+
+# 3) デザイントークンを設定（色/フォントなど）
+#    プロダクトのカラーパレットに合わせて編集してください
+open my-product/assets/design-tokens.css
+
+# 4) まずは1画面作る（単一HTML）
+cd my-product
+./run --requirements "ホーム画面を作成" --title "ホーム"
+```
 
 ### MCP設定
 
@@ -64,14 +93,15 @@ url = "https://mcp.figma.com/mcp"
 ## ディレクトリ構成
 
 ```
-tools/ui-builder/
+./
 ├── README.md              # このファイル
 ├── AGENTS.md / CLAUDE.md  # 親レベルのエージェント指示
+├── create-product          # 新規プロダクト作成スクリプト
+├── doctor                  # 環境チェックスクリプト
 ├── figma-capture           # 共通: Figmaキャプチャヘルパー
 ├── figma-plugin/           # 共通: Figma画面整理プラグイン
 ├── template/               # 新規プロダクト用テンプレート
-├── oasis/                  # giftee Benefit（OASIS）
-└── kondate-loop/           # Kondate Loop
+└── oasis/                  # giftee Benefit（OASIS）— 実運用中の参考実装
 ```
 
 ## 新しいプロダクトを追加する
@@ -79,13 +109,15 @@ tools/ui-builder/
 ### Step 1: テンプレートをコピー
 
 ```bash
-cp -r tools/ui-builder/template tools/ui-builder/<your-product>
+./create-product --dir <your-product> --name "My Product"
 ```
 
 ### Step 2: プレースホルダーを置換
 
+`create-product` を使う場合は不要（自動で置換されます）。
+
 ```bash
-cd tools/ui-builder/<your-product>
+cd <your-product>
 
 # プロダクト名とフォルダ名を置換
 sed -i '' 's/__PRODUCT_NAME__/My Product/g' run AGENTS.md CLAUDE.md assets/design-tokens.css
@@ -102,7 +134,7 @@ sed -i '' 's/__PRODUCT_DIR__/<your-product>/g' run AGENTS.md CLAUDE.md
 ### Step 4: 動作確認
 
 ```bash
-tools/ui-builder/<your-product>/run \
+./run \
   --requirements "ホーム画面を作成" \
   --title "ホーム"
 ```
@@ -114,14 +146,14 @@ tools/ui-builder/<your-product>/run \
 HTMLファイルをFigmaにキャプチャするためのヘルパースクリプト。
 
 ```bash
-figma-capture serve <dir> [--port 8765]    # HTTPサーバー起動
-figma-capture inject <html> <script>       # キャプチャスクリプト注入
-figma-capture open <url> [--delay 8]       # Chromeでページ表示→待機→閉じる
-figma-capture clean <html>                 # キャプチャスクリプト除去
-figma-capture stop                         # HTTPサーバー停止
+./figma-capture serve <dir> [--port 8765]    # HTTPサーバー起動
+./figma-capture inject <html> <script>       # キャプチャスクリプト注入
+./figma-capture open <url> [--delay 8]       # Chromeでページ表示→待機→閉じる
+./figma-capture clean <html>                 # キャプチャスクリプト除去
+./figma-capture stop                         # HTTPサーバー停止
 ```
 
-MCP `generate_figma_design` と組み合わせて使用。詳細な手順は `oasis/CLAUDE_GUIDE.md` の「Figma キャプチャワークフロー」セクションを参照。
+MCP `generate_figma_design` と組み合わせて使用（詳細はこのREADMEの「キャプチャワークフロー詳細」を参照）。
 
 ### figma-plugin
 
@@ -134,7 +166,7 @@ figma-plugin/
 └── README.md
 ```
 
-**インストール**: Figma Desktop → Plugins → Development → Import plugin from manifest
+**インストール**: Figma Desktop → Plugins → Development → Import plugin from manifest（`figma-plugin/manifest.json`）
 
 ## 各プロダクト固有の情報
 
@@ -150,16 +182,18 @@ figma-plugin/
 
 ### 基本フロー（エージェントが実行）
 
+以下は「`<product>/` ディレクトリで作業している」前提（共通スクリプトは `../figma-capture`）です。
+
 ```
 1. figma.json 確認（なければ fileKey をユーザーに確認→作成）
-2. figma-capture serve <03_ui/ディレクトリ>
+2. ../figma-capture serve <03_ui/ディレクトリ>
 3. generate_figma_design(outputMode="existingFile", fileKey=...) → captureId取得
-4. figma-capture inject <html> <JSスニペット>
-5. figma-capture open http://localhost:8765/<filename>#figmacapture={captureId}&...
+4. ../figma-capture inject <html> <JSスニペット>
+5. ../figma-capture open http://localhost:8765/<filename>#figmacapture={captureId}&...
 6. generate_figma_design(captureId=...) → ポーリング → FigmaURL取得
-7. figma-capture clean <html>
+7. ../figma-capture clean <html>
    ※複数HTMLは Step 3-7 を繰り返す（1ファイルずつ順次処理）
-8. figma-capture stop
+8. ../figma-capture stop
 9. figma.json にキャプチャ履歴を記録、FigmaURLをユーザーに報告
 ```
 
@@ -190,3 +224,9 @@ figma-plugin/
 - **Chrome背景タブ制約**: 複数ページの同時キャプチャは不可。1ページずつ順次処理
 - **HTMLのクリーンさ**: キャプチャ完了後は必ず `clean` で注入スクリプトを除去
 - **サーバー停止**: 作業完了後は必ず `stop` でHTTPサーバーを停止
+- **`--dangerously-skip-permissions`**: `run` スクリプト内で使用。Claude Codeのパイプモード（`-p`）で非対話的にHTML生成するために必要。プロンプトはスクリプトが制御しており、出力はHTML文字列のみ
+
+## 価値を出すための前提（重要）
+
+- 「既存システムのUIルール準拠」は、各プロダクトの `assets/design-tokens.css` と `run` のプロンプト（トークン/制約）を整備していることが前提
+- Figma反映はキャプチャベースのため、最終的なプロダクション実装用のコンポーネント設計（Auto Layout/Variants等）を自動生成する用途ではない

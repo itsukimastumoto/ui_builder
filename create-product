@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""
+Create a new product UI builder from template/ with placeholder replacement.
+
+Usage:
+  ./create-product --dir my-product --name "My Product"
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import shutil
+import stat
+from pathlib import Path
+
+
+def _replace_in_file(path: Path, mapping: dict[str, str]) -> None:
+    text = path.read_text(encoding="utf-8")
+    for k, v in mapping.items():
+        text = text.replace(k, v)
+    path.write_text(text, encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Create a product folder from template/")
+    parser.add_argument("--dir", required=True, help="Folder name to create (e.g. gift-store-module)")
+    parser.add_argument("--name", required=True, help='Product display name (e.g. "giftee Benefit")')
+    args = parser.parse_args()
+
+    repo_root = Path(__file__).resolve().parent
+    template_dir = repo_root / "template"
+    dst_dir = repo_root / args.dir
+
+    if not template_dir.is_dir():
+        raise SystemExit(f"template/ not found: {template_dir}")
+    if dst_dir.exists():
+        raise SystemExit(f"destination already exists: {dst_dir}")
+
+    shutil.copytree(template_dir, dst_dir)
+
+    mapping = {
+        "__PRODUCT_NAME__": args.name,
+        "__PRODUCT_DIR__": args.dir,
+    }
+
+    targets = [
+        dst_dir / "README.md",
+        dst_dir / "run",
+        dst_dir / "AGENTS.md",
+        dst_dir / "CLAUDE.md",
+        dst_dir / "assets" / "design-tokens.css",
+    ]
+    for p in targets:
+        if p.exists():
+            _replace_in_file(p, mapping)
+
+    # Ensure run is executable even if filesystem/umask strips it.
+    run_path = dst_dir / "run"
+    if run_path.exists():
+        mode = run_path.stat().st_mode
+        run_path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    print(f"Created: {dst_dir}")
+    print("Next:")
+    print(f"  1. Edit {args.dir}/assets/design-tokens.css  (set your product colors/fonts)")
+    print(f"  2. cd {args.dir}")
+    print("  3. ./run --requirements \"ホーム画面を作成\" --title \"ホーム\"")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

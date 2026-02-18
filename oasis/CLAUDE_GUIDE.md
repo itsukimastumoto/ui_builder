@@ -404,7 +404,7 @@ HTML生成後、Figmaにキャプチャして反映する。ヘルパースク�
 ### ヘルパースクリプト
 
 ```
-tools/ui-builder/figma-capture
+../figma-capture
 ```
 
 | サブコマンド | 説明 |
@@ -443,7 +443,7 @@ task/YYMMDD_title/figma.json
 #### Step 2: HTTPサーバー起動
 
 ```bash
-tools/ui-builder/figma-capture serve task/YYMMDD_title/03_ui/
+../figma-capture serve task/YYMMDD_title/03_ui/
 ```
 
 出力例: `Server started on port 8765 (PID: 12345)`
@@ -464,7 +464,7 @@ generate_figma_design(
 #### Step 4: キャプチャスクリプト注入
 
 ```bash
-tools/ui-builder/figma-capture inject task/.../03_ui/home.html '<script src="https://...capture.js" async></script>'
+../figma-capture inject task/.../03_ui/home.html '<script src="https://...capture.js" async></script>'
 ```
 
 Step 3 で返されたJSスニペット（scriptタグ）をそのまま渡す。
@@ -472,7 +472,7 @@ Step 3 で返されたJSスニペット（scriptタグ）をそのまま渡す�
 #### Step 5: Chromeでページ表示
 
 ```bash
-tools/ui-builder/figma-capture open "http://localhost:8765/home.html#figmacapture={captureId}&figmaendpoint=https%3A%2F%2Fmcp.figma.com%2Fmcp%2Fcapture%2F{captureId}%2Fsubmit&figmadelay=3000" --delay 8
+../figma-capture open "http://localhost:8765/home.html#figmacapture={captureId}&figmaendpoint=https%3A%2F%2Fmcp.figma.com%2Fmcp%2Fcapture%2F{captureId}%2Fsubmit&figmadelay=3000" --delay 8
 ```
 
 - URL のハッシュパラメータに `captureId`、`figmaendpoint`、`figmadelay` を付与
@@ -491,7 +491,7 @@ generate_figma_design(captureId: "<captureId>")
 #### Step 7: クリーンアップ
 
 ```bash
-tools/ui-builder/figma-capture clean task/.../03_ui/home.html
+../figma-capture clean task/.../03_ui/home.html
 ```
 
 **複数ファイルがある場合**: Step 3〜7 をファイルごとに繰り返す（**必ず1ファイルずつ順次処理**。Chromeの背景タブ制約により同時処理は失敗する）。
@@ -499,7 +499,7 @@ tools/ui-builder/figma-capture clean task/.../03_ui/home.html
 #### Step 8: サーバー停止
 
 ```bash
-tools/ui-builder/figma-capture stop
+../figma-capture stop
 ```
 
 #### Step 9: 記録・報告
@@ -535,7 +535,7 @@ tools/ui-builder/figma-capture stop
 キャプチャ後、Figma上で画面をカテゴリ別に整理するプラグインを同梱:
 
 ```
-tools/ui-builder/figma-plugin/
+../figma-plugin/
 ├── manifest.json
 ├── code.js         # カテゴリ定義は先頭の変数で設定
 └── README.md       # インストール・実行手順
