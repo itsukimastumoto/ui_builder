@@ -2,6 +2,8 @@
 
 Claude Code / Codex を使って単一HTMLのUIワイヤーフレームを生成し、Figmaに反映するツール。
 
+> **説明書（Notion）**: [UI Builder 説明書](https://www.notion.so/UI-30cbdea4aea7806dabcdd78ad7ebe615?v=206bdea4aea780919830000caedcdff3)
+
 このREADMEは、このリポジトリを **単体で GitHub から clone して使う**前提で書かれています（パスはリポジトリルート基準）。
 
 ## 提供価値
