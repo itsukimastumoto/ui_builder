@@ -13,14 +13,62 @@ Claude Code / Codex を使って単一HTMLのUIワイヤーフレームを生成
 ## ワークフロー
 
 ```
-1. Figma読み込み        Figma Dev Mode MCP で既存デザインを取得（任意）
+0. 事前準備              デザイントークン（色/フォント）とAGENTS.md（デザインルール）を整備
        ↓
-2. HTML生成            Claude Code でHTMLデザインを作成
+1. 要件をインプット       要件書 or 対話で「何の画面を作るか」を定義
        ↓
-3. Figmaにキャプチャ    figma-capture + generate_figma_design でFigmaに反映
+2. Figma読み込み（任意）  Figma Dev Mode MCP で既存デザインを参照
        ↓
-4. プロトタイプ作成      Figma上でフレームを接続してプロトタイプ化
+3. HTML生成              Claude Code でHTMLデザインを作成 → task/ に保存
+       ↓
+4. Figmaにキャプチャ      figma-capture + generate_figma_design でFigmaに反映
+       ↓
+5. プロトタイプ作成       Figma上でフレームを接続してプロトタイプ化
 ```
+
+## タスクフォルダ構造
+
+UI Builderでは **画面作成のたびにタスクフォルダが作られ**、要件（インプット）と生成物（アウトプット）がセットで管理される。
+
+```
+<product>/task/
+└── YYMMDD_タイトル/              # 例: 260218_ホーム画面刷新
+    ├── 01_require/               # インプット: 要件書
+    │   └── YYMMDD_タイトル.txt   #   画面の要件・仕様テキスト
+    ├── 02_asset/                 # 参考素材（スクショ、既存UI画像など）
+    ├── 03_ui/                    # アウトプット: 生成されたHTML
+    │   ├── home.html             #   単一HTMLファイル（CSS/JS内包）
+    │   ├── modal-gift.html       #   画面ごとに1ファイル
+    │   └── ...
+    └── figma.json                # Figmaキャプチャ履歴（自動生成）
+```
+
+### インプットとアウトプットの関係
+
+| フォルダ | 役割 | 内容 |
+|---------|------|------|
+| `01_require/` | **インプット** | 要件書テキスト。画面の目的・構成要素・振る舞いなどを記載 |
+| `02_asset/` | **参考素材** | 参考スクショ、既存UI画像、ワイヤースケッチなど |
+| `03_ui/` | **アウトプット** | AIが生成した単一HTMLファイル |
+| `figma.json` | **キャプチャ記録** | FigmaファイルキーとキャプチャURL履歴 |
+
+### 要件書の追記ルール
+
+ユーザーから追加要望・フィードバックがあった場合、UIの修正と同時に要件書にも追記する。
+
+```
+01_require/YYMMDD_タイトル.txt
+
+---
+
+## 追加要件（YYYY/MM/DD）
+
+### 〇〇の改善
+- 追加要望1
+- 追加要望2
+```
+
+元の要件は変更せず、日付付きで追記する（経緯を後から追えるようにする）。
 
 ## 前提条件
 
@@ -32,7 +80,7 @@ Claude Code / Codex を使って単一HTMLのUIワイヤーフレームを生成
 | Figma Remote MCP | `generate_figma_design`（書き込み）に使用。OAuth認証が必要 |
 | Python 3 | `figma-capture` のHTTPサーバー/注入処理に使用 |
 
-## クイックスタート（10分）
+## クイックスタート
 
 前提: [Claude Code](https://docs.anthropic.com/en/docs/claude-code) または Codex CLI がインストール済みであること。`./doctor` で環境チェックできます。
 
@@ -47,8 +95,17 @@ Claude Code / Codex を使って単一HTMLのUIワイヤーフレームを生成
 #    プロダクトのカラーパレットに合わせて編集してください
 open my-product/assets/design-tokens.css
 
-# 4) まずは1画面作る（単一HTML）
+# 4) テンプレート作成（重要）
+#    Figmaに既存デザインがあれば、Claude Code対話モードで読み込んで
+#    templates/ にHTMLテンプレートを作成する
 cd my-product
+claude   # Claude Code起動
+# → 「Figmaの〇〇画面をベースにテンプレートを作って」と指示
+
+# 5) UIを作成（テンプレート作成後はここからスタート）
+# 対話モード（推奨）:
+#   「ホーム画面を作って。要件は〇〇」と指示
+# バッチモード:
 ./run --requirements "ホーム画面を作成" --title "ホーム"
 ```
 
@@ -102,6 +159,25 @@ url = "https://mcp.figma.com/mcp"
 ├── figma-plugin/           # 共通: Figma画面整理プラグイン
 ├── template/               # 新規プロダクト用テンプレート
 └── oasis/                  # giftee Benefit（OASIS）— 実運用中の参考実装
+```
+
+### プロダクトフォルダの構成
+
+```
+<product>/
+├── run                    # バッチ生成スクリプト
+├── AGENTS.md / CLAUDE.md  # AIへのデザインルール・作業指示
+├── assets/
+│   ├── design-tokens.css  # デザイントークン（色/フォント/スペーシング）
+│   ├── icons.html         # SVGアイコン集（任意）
+│   └── images/            # ロゴ・画像素材（任意）
+├── templates/             # 参照用HTMLテンプレート
+└── task/                  # タスクフォルダ（要件+生成物のセット管理）
+    └── YYMMDD_タイトル/
+        ├── 01_require/    # インプット（要件書）
+        ├── 02_asset/      # 参考素材
+        ├── 03_ui/         # アウトプット（生成HTML）
+        └── figma.json     # キャプチャ履歴
 ```
 
 ## 新しいプロダクトを追加する
@@ -228,5 +304,6 @@ figma-plugin/
 
 ## 価値を出すための前提（重要）
 
-- 「既存システムのUIルール準拠」は、各プロダクトの `assets/design-tokens.css` と `run` のプロンプト（トークン/制約）を整備していることが前提
+- 「既存システムのUIルール準拠」は、各プロダクトの `assets/design-tokens.css` と `AGENTS.md`（デザインルール/制約）を整備していることが前提
+- 要件の粒度が高いほど出力の品質が上がる。`01_require/` に要件書を事前に書いておくと、AIが意図通りの画面を生成しやすい
 - Figma反映はキャプチャベースのため、最終的なプロダクション実装用のコンポーネント設計（Auto Layout/Variants等）を自動生成する用途ではない

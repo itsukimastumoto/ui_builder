@@ -53,7 +53,13 @@
 6. Figmaファイルキーがあればルート `figma.json` を作成
 7. 親の `AGENTS.md` のプロダクト一覧に追記
 
-### 4. 完了報告
+### 4. テンプレート作成（初回セットアップの重要ステップ）
+
+Figmaに既存デザインがある場合、Dev Mode MCP で読み込んで `templates/` にHTMLテンプレートを作成する。テンプレートがあると、以降のUI作成がプロダクトのデザインルールに沿ったものになる。
+
+詳細は `CLAUDE_GUIDE.md` の「初回セットアップ: テンプレート作成」セクションを参照。
+
+### 5. 完了報告
 - 作成したフォルダパスを伝える
 - 「〇〇のUIを作成して」で使い始められることを案内
 
@@ -68,25 +74,48 @@
 - 外部参照はGoogle Fonts（Noto Sans JP）のみ許可。
 <!-- 以下はプロダクト固有のルールを追記 -->
 
-## 作業フロー（推奨）
-- `./run --requirements "..." --title "..." --output file.html` を使う。
-- 生成先は `task/yymmdd_タイトル/` 配下。
-- 要件書は `task/.../01_require/要件書.txt`。
-- UIは `task/.../03_ui/*.html`。
+## タスクフォルダ構成
+
+画面作成のたびにタスクフォルダが作られ、要件（インプット）と生成物（アウトプット）がセットで管理される。
+
+```
+task/YYMMDD_タイトル/
+├── 01_require/               # インプット: 要件書
+│   └── YYMMDD_タイトル.txt
+├── 02_asset/                 # 参考素材（スクショ、既存UI画像など）
+├── 03_ui/                    # アウトプット: 生成されたHTML
+│   └── [画面名].html
+└── figma.json                # Figmaキャプチャ履歴（自動生成）
+```
+
+## UI作成ワークフロー
+
+UI作成依頼を受けたら、以下の手順で進める。**詳細は `CLAUDE_GUIDE.md` を参照。**
+
+```
+1. 要件の確認     → 01_require/ の要件書を読む or ユーザー指示から要件書を作成
+2. 参照ファイル読み込み → assets/design-tokens.css + templates/ を参照
+3. HTML生成       → 単一HTMLを 03_ui/ に出力
+4. Figmaキャプチャ → figma-capture + MCP で自動反映（デフォルト実行）
+5. 要件追記       → フィードバックがあれば UI修正 + 要件書に追記
+```
 
 ## 参照アセット
 - デザイントークン: `assets/design-tokens.css`
+- テンプレート: `templates/`
 <!-- テンプレートやアイコンがある場合は追記 -->
 
 ## 追加要件の追記（必須）
-- ユーザーから追加要望が出たら、UI修正と同時に要件書へ追記する。
-- 追記は日付付きで追加する（元要件は変更しない）。
+- ユーザーから追加要望が出たら、UI修正と同時に `01_require/` の要件書へ追記する。
+- `---` 区切り + 日付付きで追加する（元要件は変更しない）。
+- 詳細フォーマットは `CLAUDE_GUIDE.md` の「追加要件の管理」セクションを参照。
 
 ## Figma Dev Mode MCP 連携（読み取り: Figma → HTML）
 - 「Figmaから取って」「Figmaのデザインをベースに」等の指示があれば、Figma Dev Mode MCPを使う。
 - ユーザーがFigmaでノードを選択 → `get_design_context` + `get_screenshot` で取得 → HTML変換。
 - Figma出力はReact+Tailwind。単一HTML形式に変換すること。
 - Figma Desktop Appが起動していないとエラーになる。その場合はユーザーに起動を依頼する。
+- 変換ルール詳細は `CLAUDE_GUIDE.md` を参照。
 
 ## Figma キャプチャ（書き込み: HTML → Figma）
 - **HTML生成後、Figmaへのキャプチャをデフォルトで実行する。**
@@ -96,10 +125,13 @@
 - タスクフォルダの `figma.json` に fileKey とキャプチャ履歴を保存。
 - 初回実行時はユーザーに Figma ファイルキーを確認する。
 - 複数HTMLは1ファイルずつ順次処理（Chrome背景タブ制約の回避）。
-- **キャプチャワークフロー詳細は（リポジトリルートの）`README.md` を参照。**
+- **キャプチャワークフロー詳細は `CLAUDE_GUIDE.md` を参照。**
 
 ## Figma 画面整理プラグイン
 - キャプチャ後の画面整理に使用: `../figma-plugin/`（共通）
 - カテゴリ別セクション作成・フレーム配置を自動化。
 - Figma Desktop App のプラグインメニューから手動実行。
 - カテゴリは `figma-plugin/code.js` 先頭の `CATEGORIES` を編集してプロダクトごとにカスタマイズ。
+
+## 詳細
+- `README.md` と `CLAUDE_GUIDE.md` を参照。
